@@ -1,10 +1,13 @@
 # Pytorch-Torchtext
-Typical components of task in NLP:
-1) Preprocessing and tokenization
-Generating vocabulary of unique tokens and converting words to indices
-2) Loading pretrained vectors e.g. Glove, Word2vec, Fasttext
-3) Padding text with zeros in case of variable lengths
-4) Dataloading and batching
-5) Model creation and training
+Using Torchtext with Pytorch for toxic comment classification task, using simple LSTM as the model (data: https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge).
 
-You can find the explanation in the comment of the code.
+Typical process of a task in NLP:
+1) Preprocessing and tokenization
+2) Vectorization: generating vocabulary of unique tokens and converting words to indices
+3) Loading pretrained vectors e.g. Glove, Word2vec, Fasttext
+4) Padding text: most of the time the text sequence differs in length
+5) Dataloading and batching
+6) Model creation and training
+
+Torchtext handles step 1-5 above with minimal code. 
+

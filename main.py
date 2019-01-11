@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import torch
 
-#loading the data
+#take a look at the data
 pd.read_csv('data/train.csv').head()
 
 from torchtext.data import Field
@@ -36,7 +36,7 @@ print ('size of the train, dev, test dataset:', len(trn), len(vld), len(tst))
 #print (tst[0].comment_text) 
 
 from torchtext import vocab
-vec = vocab.Vectors('data/glove.6B.50d.txt', './data/')
+vec = vocab.Vectors('data/glove.6B.50d.txt', './data/') #download by yourself. actually you can mention explicitly in torchtext. google it!
 TEXT.build_vocab(trn, vld, max_size=200, vectors=vec)
 print ('size of the vocab and embedding dim:', TEXT.vocab.vectors.shape) #size=202,50 (max vocab size=200+2 for <unk> and <pad>, and glove vector dim=50)
 print ('index of the in the vocab:', TEXT.vocab.stoi['the']) #output:2, so the index 2 in vocab is for 'the'
@@ -51,10 +51,10 @@ print ('index 0 in the vocab:', TEXT.vocab.itos[0]) #output:<unk>, so the index 
 from torchtext.data import Iterator, BucketIterator
 train_iter, val_iter = BucketIterator.splits((trn, vld),
                                             batch_sizes=(3,3),
-                                            device='cuda',
+                                            device='cuda', #change to 'cpu' if you use cpu
                                             sort_key=lambda x: len(x.comment_text), #tell the bucketIterator how to group the sequences
                                             sort_within_batch=False,
-                                            repeat=False) #we want to wrap this Iterator layer
+                                            repeat=False)
 test_iter = Iterator(tst, batch_size=3, device='cuda', sort=False, sort_within_batch=False, repeat=False)
 
 print ('number of batch (size: 3):', len(train_iter), len(val_iter)) #output: 9,9. because our train and val data only has 25 examples. since the batch size is 3, it means we have 25/3: 9 batches for each train and val
@@ -79,7 +79,7 @@ class BatchGenerator:
                 y = torch.zeros((1))
             yield (X,y)
 
-train_batch_it = BatchGenerator(train_iter, 'comment_text', ['toxic', 'threat'])
+train_batch_it = BatchGenerator(train_iter, 'comment_text', ['toxic', 'threat']) #note that i only use these two categories >> too lazy
 #print ('get data x and y out of batch object:', next(iter(train_batch_it)))
 valid_batch_it = BatchGenerator(val_iter, 'comment_text', ['toxic', 'threat'])
 test_batch_it = BatchGenerator(test_iter, 'comment_text', None)

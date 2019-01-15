@@ -97,8 +97,8 @@ class SimpleLSTM(nn.Module):
         self.embedding = nn.Embedding(vocab_size, emb_dim)
         self.embedding.weight.data.copy_(pretrained_vec) #load pretrained vec
         self.embedding.weight.requires_grad = False #make embedding non-trainable    
-        self.encoder = nn.LSTM(emb_dim, hidden_dim, num_layers=2, dropout=0.1)
-        self.linear = nn.Linear(hidden_dim, hidden_dim)
+        self.encoder = nn.LSTM(emb_dim, hidden_dim, num_layers=2, dropout=0.1, bidirectional=True)
+        self.linear = nn.Linear(hidden_dim*2, hidden_dim)
         self.predictor = nn.Linear(hidden_dim, out_dim)
     
     def forward(self, seq):

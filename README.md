@@ -1,5 +1,5 @@
 # Pytorch-Torchtext
-Using Torchtext with Pytorch for toxic comment classification task, using simple LSTM as the model (data: https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge).
+Using Torchtext with Pytorch for toxic comment classification task, using simple BiLSTM as the model (data: https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge).
 
 Typical process of a task in NLP:
 1) Preprocessing and tokenization

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import torch
 
-#take a look at the data
+#loading the data
 pd.read_csv('data/train.csv').head()
 
 from torchtext.data import Field
@@ -36,7 +36,7 @@ print ('size of the train, dev, test dataset:', len(trn), len(vld), len(tst))
 #print (tst[0].comment_text) 
 
 from torchtext import vocab
-vec = vocab.Vectors('data/glove.6B.50d.txt', './data/') #download by yourself. actually you can mention explicitly in torchtext. google it!
+vec = vocab.Vectors('data/glove.6B.50d.txt', './data/')
 TEXT.build_vocab(trn, vld, max_size=200, vectors=vec)
 print ('size of the vocab and embedding dim:', TEXT.vocab.vectors.shape) #size=202,50 (max vocab size=200+2 for <unk> and <pad>, and glove vector dim=50)
 print ('index of the in the vocab:', TEXT.vocab.stoi['the']) #output:2, so the index 2 in vocab is for 'the'
@@ -51,10 +51,10 @@ print ('index 0 in the vocab:', TEXT.vocab.itos[0]) #output:<unk>, so the index 
 from torchtext.data import Iterator, BucketIterator
 train_iter, val_iter = BucketIterator.splits((trn, vld),
                                             batch_sizes=(3,3),
-                                            device='cuda', #change to 'cpu' if you use cpu
+                                            device='cuda',
                                             sort_key=lambda x: len(x.comment_text), #tell the bucketIterator how to group the sequences
                                             sort_within_batch=False,
-                                            repeat=False)
+                                            repeat=False) #we want to wrap this Iterator layer
 test_iter = Iterator(tst, batch_size=3, device='cuda', sort=False, sort_within_batch=False, repeat=False)
 
 print ('number of batch (size: 3):', len(train_iter), len(val_iter)) #output: 9,9. because our train and val data only has 25 examples. since the batch size is 3, it means we have 25/3: 9 batches for each train and val
@@ -79,7 +79,7 @@ class BatchGenerator:
                 y = torch.zeros((1))
             yield (X,y)
 
-train_batch_it = BatchGenerator(train_iter, 'comment_text', ['toxic', 'threat']) #note that i only use these two categories >> too lazy
+train_batch_it = BatchGenerator(train_iter, 'comment_text', ['toxic', 'threat'])
 #print ('get data x and y out of batch object:', next(iter(train_batch_it)))
 valid_batch_it = BatchGenerator(val_iter, 'comment_text', ['toxic', 'threat'])
 test_batch_it = BatchGenerator(test_iter, 'comment_text', None)
@@ -102,10 +102,15 @@ class SimpleLSTM(nn.Module):
         self.predictor = nn.Linear(hidden_dim, out_dim)
     
     def forward(self, seq):
-        hdn, _ = self.encoder(self.embedding(seq))
-        feature = hdn[-1, :, :]
+        emb = self.embedding(seq)
+        hdn, _ = self.encoder(emb) #initial h0, c0 is zero. _ : (hn,cn), hdn=output features for each timestep
+        #print (seq.shape, emb.shape, hdn.shape)
+        feature = hdn[-1, :, :] #take the last timestep of the encoder output
+        #print (feature.shape)
         feature = self.linear(feature)
+        #print (feature.shape)
         preds = self.predictor(feature)
+        #print (preds.shape)
         return preds
 
 vocab_size = len(TEXT.vocab)
@@ -120,7 +125,9 @@ model.cuda()
 import tqdm
 opt = optim.Adam(model.parameters(), lr=1e-2)
 criterion = nn.BCEWithLogitsLoss()
-epochs = 10
+epochs = 100
+train_loss = []
+valid_loss = []
 
 for epoch in range(1, epochs+1):
     training_loss = 0.0
@@ -143,6 +150,8 @@ for epoch in range(1, epochs+1):
         loss = criterion(preds, y)
         val_loss += loss.item() * x.size(0)
     val_loss /= len(vld)
+    train_loss.append(epoch_loss)
+    valid_loss.append(val_loss)
     print ('Epoch: {}, Training loss: {:.4f}, Validation loss: {:.4f}'.format(epoch, epoch_loss, val_loss))
     
 #predictions. note that the preds is the probability of the comment belong in each category output
@@ -156,6 +165,16 @@ for x, y in tqdm.tqdm(test_batch_it):
 
 test_preds = np.hstack(test_preds)
 
+import matplotlib.pyplot as plt
+ep = range(1, epochs+1)
+print (ep)
+plt.plot(ep, train_loss, 'bo', label='Training loss')
+plt.plot(ep, valid_loss, 'b', label='Validation loss')
+plt.title('Training and validation loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.savefig('plt.png')
 #print (test_preds)
 
 import sys

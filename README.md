@@ -11,5 +11,5 @@ Typical process of a task in NLP:
 
 Torchtext handles step 1-5 above with minimal code. 
 
-P.S. Sorry, I dumped all 1-6 steps into one main.py code~
+P.S. Sorry, I dumped all into one main.py code~
 
